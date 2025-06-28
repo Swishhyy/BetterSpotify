@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #191414;
+    color: white;
+    font-family: 'Circular', Arial, sans-serif;
+  }
+  
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    background-color: #1DB954;
+    color: #191414;
+    padding: 12px 24px;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: transform 0.2s;
+  }
+  
+  .btn-primary:hover {
+    transform: scale(1.05);
+  }
+  
+  .btn-secondary {
+    background-color: transparent;
+    border: 1px solid #B3B3B3;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  
+  .btn-secondary:hover {
+    border-color: white;
+    transform: scale(1.05);
+  }
+  
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px;
+    border-radius: 6px;
+    color: #B3B3B3;
+    transition: color 0.2s;
+    cursor: pointer;
+  }
+  
+  .sidebar-item:hover {
+    color: white;
+  }
+  
+  .track-item {
+    display: grid;
+    grid-template-columns: 40px 1fr auto auto;
+    gap: 16px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+  }
+  
+  .track-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .player-control {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    cursor: pointer;
+  }
+  
+  .player-control:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .glass {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
