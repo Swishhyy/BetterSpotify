@@ -1,2 +1,2 @@
 # BetterSpotify
-A Rust Based Spotify Rebuild
+A Rust Based Spotify Rebuild AND hopefully blocks ads 
