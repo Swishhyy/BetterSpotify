@@ -1,19 +1,33 @@
 import { useState, useEffect } from 'react';
 import { Sidebar, TopBar, Player, SearchView } from './components';
 import { useAuthStore } from './store';
-import { useSpotifyAuth } from './hooks';
+import { useSpotifyAuth, useTauriEnvironment } from './hooks';
 import './styles/globals.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
   const { isAuthenticated, isLoading, error } = useAuthStore();
   const { isAuthenticating, authenticateWithSpotify } = useSpotifyAuth();
+  const { isTauri, isLoading: isCheckingEnvironment } = useTauriEnvironment();
 
   // Debug: Log auth state
   useEffect(() => {
     const { user, accessToken } = useAuthStore.getState();
     console.log('Auth State:', { isAuthenticated, user, accessToken: accessToken ? '***' : null, error });
   }, [isAuthenticated, error]);
+
+  // Debug: Log environment detection
+  useEffect(() => {
+    console.log('🔍 Environment Detection Debug:');
+    console.log('- isTauri:', isTauri);
+    console.log('- isCheckingEnvironment:', isCheckingEnvironment);
+    console.log('- window.__TAURI__:', (window as any).__TAURI__);
+    console.log('- window.__TAURI_INTERNALS__:', (window as any).__TAURI_INTERNALS__);
+    console.log('- window.__TAURI_METADATA__:', (window as any).__TAURI_METADATA__);
+    console.log('- navigator.userAgent:', navigator.userAgent);
+    console.log('- Available window properties starting with __TAURI:', 
+      Object.keys(window).filter(key => key.startsWith('__TAURI')));
+  }, [isTauri, isCheckingEnvironment]);
 
   const getViewTitle = (view: string) => {
     switch (view) {
@@ -64,12 +78,28 @@ function App() {
               </p>
             </div>
 
+            {isTauri === false && (
+              <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+                <p className="text-blue-400 text-sm">
+                  <strong>Development Mode:</strong> You're running in browser mode. 
+                  For full functionality including authentication, run the Tauri desktop app with: <code className="bg-blue-900/30 px-1 rounded">npm run tauri dev</code>
+                </p>
+              </div>
+            )}
+
             <button
               onClick={authenticateWithSpotify}
-              disabled={isAuthenticating || isLoading}
+              disabled={isAuthenticating || isLoading || isTauri === false || isCheckingEnvironment}
               className="bg-green-500 hover:bg-green-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200"
             >
-              {isAuthenticating ? 'Authenticating...' : 'Login with Spotify'}
+              {isCheckingEnvironment 
+                ? 'Checking Environment...' 
+                : isAuthenticating 
+                  ? 'Authenticating...' 
+                  : isTauri 
+                    ? 'Login with Spotify' 
+                    : 'Login (Desktop App Required)'
+              }
             </button>
             
             {isAuthenticating && (

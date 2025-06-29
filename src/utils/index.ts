@@ -1,6 +1,9 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+// Export environment utilities
+export * from './environment';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

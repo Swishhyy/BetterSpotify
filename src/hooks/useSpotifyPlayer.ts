@@ -155,6 +155,57 @@ export const useSpotifyPlayer = () => {
     };
   }, [accessToken]); // Only depend on accessToken
 
+  // Add polling for current playback state from Spotify Web API
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const fetchCurrentPlaybackState = async () => {
+      try {
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        if (response.status === 204) {
+          // No active playback
+          console.log('🎵 No active playback from Web API');
+          return;
+        }
+
+        if (!response.ok) {
+          console.log('🎵 Failed to fetch playback state:', response.status);
+          return;
+        }
+
+        const playbackState = await response.json();
+        console.log('🎵 Current playback state from Web API:', {
+          isPlaying: playbackState.is_playing,
+          track: playbackState.item?.name,
+          device: playbackState.device?.name
+        });
+
+        // Update state with current playback info
+        if (playbackState.item) {
+          setCurrentTrack(playbackState.item);
+          setIsPlaying(playbackState.is_playing);
+          setPosition(playbackState.progress_ms || 0);
+          setDuration(playbackState.item.duration_ms || 0);
+        }
+      } catch (error) {
+        console.error('🎵 Error fetching playback state:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchCurrentPlaybackState();
+
+    // Poll every 3 seconds for current playback state
+    const interval = setInterval(fetchCurrentPlaybackState, 3000);
+
+    return () => clearInterval(interval);
+  }, [accessToken]);
+
   const playTrack = async (uri: string) => {
     console.log('🎵 Play track requested:', { uri, hasDeviceId: !!deviceId, hasAccessToken: !!accessToken, isReady });
     
@@ -200,32 +251,106 @@ export const useSpotifyPlayer = () => {
   };
 
   const playPause = async () => {
-    if (!player) return;
+    if (!accessToken) return;
     
     try {
-      await player.togglePlay();
+      // Use Web API for more reliable playback control
+      const endpoint = isPlaying 
+        ? 'https://api.spotify.com/v1/me/player/pause'
+        : 'https://api.spotify.com/v1/me/player/play';
+        
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error('❌ Playback control error:', response.status);
+        // Fallback to SDK if available
+        if (player) {
+          await player.togglePlay();
+        }
+      } else {
+        console.log('✅ Playback toggled via Web API');
+        // Immediately update state for responsive UI
+        setIsPlaying(!isPlaying);
+      }
     } catch (error) {
       console.error('Error toggling play/pause:', error);
+      // Fallback to SDK
+      if (player) {
+        try {
+          await player.togglePlay();
+        } catch (sdkError) {
+          console.error('SDK fallback also failed:', sdkError);
+        }
+      }
     }
   };
 
   const nextTrack = async () => {
-    if (!player) return;
+    if (!accessToken) return;
     
     try {
-      await player.nextTrack();
+      const response = await fetch('https://api.spotify.com/v1/me/player/next', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error('❌ Next track error:', response.status);
+        // Fallback to SDK
+        if (player) {
+          await player.nextTrack();
+        }
+      } else {
+        console.log('✅ Next track via Web API');
+      }
     } catch (error) {
       console.error('Error skipping to next track:', error);
+      if (player) {
+        try {
+          await player.nextTrack();
+        } catch (sdkError) {
+          console.error('SDK fallback failed:', sdkError);
+        }
+      }
     }
   };
 
   const previousTrack = async () => {
-    if (!player) return;
+    if (!accessToken) return;
     
     try {
-      await player.previousTrack();
+      const response = await fetch('https://api.spotify.com/v1/me/player/previous', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error('❌ Previous track error:', response.status);
+        // Fallback to SDK
+        if (player) {
+          await player.previousTrack();
+        }
+      } else {
+        console.log('✅ Previous track via Web API');
+      }
     } catch (error) {
-      console.error('Error skipping to previous track:', error);
+      console.error('Error going to previous track:', error);
+      if (player) {
+        try {
+          await player.previousTrack();
+        } catch (sdkError) {
+          console.error('SDK fallback failed:', sdkError);
+        }
+      }
     }
   };
 

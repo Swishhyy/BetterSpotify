@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useAuthStore } from '../store';
 import { spotifyService } from '../services';
+import { useTauriEnvironment } from './useTauriEnvironment';
 
 interface AuthResult {
   success: boolean;
@@ -20,6 +21,7 @@ interface StoredTokens {
 export const useSpotifyAuth = () => {
   const { user, accessToken, setUser, setAccessToken, setLoading, setError } = useAuthStore();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { isTauri } = useTauriEnvironment();
 
   // Check for stored tokens on app start
   useEffect(() => {
@@ -27,6 +29,14 @@ export const useSpotifyAuth = () => {
       try {
         console.log('🔐 Checking for stored tokens...');
         setLoading(true);
+        
+        // Only attempt to invoke Tauri commands if we're in a Tauri environment
+        if (isTauri === false) {
+          console.log('🌐 Running in browser mode, skipping token check');
+          setLoading(false);
+          return;
+        }
+        
         let tokens = await invoke<StoredTokens | null>('load_tokens');
         
         if (tokens) {
@@ -58,6 +68,12 @@ export const useSpotifyAuth = () => {
 
   // Listen for auth results from the Tauri backend
   useEffect(() => {
+    // Only set up event listeners if we're in a Tauri environment
+    if (isTauri === false) {
+      console.log('🌐 Running in browser mode, skipping event listeners');
+      return;
+    }
+
     const unlisten = listen<AuthResult>('auth-result', async (event) => {
       const authResult = event.payload;
       
@@ -98,6 +114,11 @@ export const useSpotifyAuth = () => {
     
     if (!clientId) {
       setError('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your .env file');
+      return;
+    }
+
+    if (isTauri === false) {
+      setError('Authentication is only available in the Tauri desktop app. Please run "npm run tauri dev" to use authentication.');
       return;
     }
 
